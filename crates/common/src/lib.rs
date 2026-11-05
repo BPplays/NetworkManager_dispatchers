@@ -1,4 +1,3 @@
-use std::{path::Path};
 // use tracing;
 
 use bytesize::ByteSize;
@@ -146,6 +145,123 @@ pub fn init_logging(
 	}
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Nice(i8);
+
+impl std::fmt::Display for Nice {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		self.0.fmt(f)
+	}
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum SetNiceError {
+	#[error("failed to set niceness: {0}")]
+	Set(#[source] io::Error),
+
+	#[error("failed to retrieve niceness: {0}")]
+	Get(#[source] io::Error),
+
+	#[error("niceness mismatch: requested {requested}, got {actual}")]
+	Mismatch {
+		requested: Nice,
+		actual: Nice,
+	},
+}
+
+macro_rules! impl_try_from_int {
+	($($ty:ty),*) => {
+		$(
+			impl TryFrom<$ty> for Nice {
+				type Error = std::io::Error;
+
+				fn try_from(value: $ty) -> Result<Self, Self::Error> {
+					let value = i8::try_from(value).map_err(|_| {
+						std::io::Error::from(
+							std::io::ErrorKind::InvalidInput
+						)
+					})?;
+
+					if (-20..=19).contains(&value) {
+						Ok(Self(value))
+					} else {
+						Err(std::io::Error::from(
+							std::io::ErrorKind::InvalidInput
+						))
+					}
+				}
+			}
+		)*
+	};
+}
+
+impl_try_from_int!(
+	i8, i16, i32, i64, i128, isize,
+	u8, u16, u32, u64, u128, usize
+);
+
+macro_rules! impl_from_nice {
+	($($ty:ty),*) => {
+		$(
+			impl From<Nice> for $ty {
+				fn from(nice: Nice) -> Self {
+					nice.0 as $ty
+				}
+			}
+		)*
+	};
+}
+
+impl_from_nice!(
+	i8, i16, i32, i64, i128, isize,
+	u8, u16, u32, u64, u128, usize
+);
+
+/// Retrieves the calling thread's niceness.
+pub fn get_current_niceness() -> io::Result<Nice> {
+	unsafe {
+		// getpriority() can legitimately return -1.
+		*libc::__errno_location() = 0;
+
+		let priority = libc::getpriority(libc::PRIO_PROCESS, 0);
+		let errno = *libc::__errno_location();
+
+		if priority == -1 && errno != 0 {
+			return Err(io::Error::from_raw_os_error(errno));
+		}
+
+		Nice::try_from(priority)
+	}
+}
+
+/// Sets and verifies the calling thread's niceness.
+pub fn set_niceness(nice: Nice) -> Result<(), SetNiceError> {
+	let result = unsafe {
+		libc::setpriority(
+			libc::PRIO_PROCESS,
+			0,
+			nice.into(),
+		)
+	};
+
+	if result == -1 {
+		return Err(SetNiceError::Set(
+			io::Error::last_os_error(),
+		));
+	}
+
+	let actual = get_current_niceness()
+		.map_err(SetNiceError::Get)?;
+
+	if actual != nice {
+		return Err(SetNiceError::Mismatch {
+			requested: nice,
+			actual,
+		});
+	}
+
+	Ok(())
+}
 
 
 #[derive(Debug, thiserror::Error)]
@@ -222,13 +338,30 @@ pub async fn cleanup_connection_files(
 
 
 
-// #[cfg(test)]
-// mod tests {
-// 	use super::*;
-//
-// 	#[test]
-// 	fn it_works() {
-// 		let result = add(2, 2);
-// 		assert_eq!(result, 4);
-// 	}
-// }
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	fn test_set_niceness(n: i32) {
+		let nice = Nice::try_from(n).unwrap();
+		set_niceness(nice).unwrap();
+		println!("{:#?}", get_current_niceness());
+	}
+
+	#[test]
+	fn test_many_set_nicenesses() {
+		//WARN: Should be in order or else you'll get perm errors raising niceness
+		test_set_niceness(5);
+		test_set_niceness(15);
+		test_set_niceness(19);
+	}
+
+	#[test]
+	fn test_nice_type() {
+		assert!(Nice::try_from(-21).is_err());
+		assert!(Nice::try_from(20).is_err());
+
+		assert!(Nice::try_from(-20).is_ok());
+		assert!(Nice::try_from(19).is_ok());
+	}
+}

@@ -6,6 +6,7 @@ edition.workspace = true
 [dependencies]
 bytesize.workspace = true
 clap.workspace = true
+libc.workspace = true
 ltrace.workspace = true
 nmrs.workspace = true
 thiserror.workspace = true

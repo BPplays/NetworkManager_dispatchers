@@ -12,6 +12,8 @@ serde = { version = "1.0.229", features = ["derive", "rc", "alloc"] }
 thiserror = "2.0.21"
 tokio = { version = "1.54.1", features = ["full"] }
 
+libc = "0.2.191"
+
 nmrs = "3.5.7"
 
 
