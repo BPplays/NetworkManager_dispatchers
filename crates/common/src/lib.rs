@@ -176,13 +176,14 @@ macro_rules! impl_try_from_int {
 				type Error = std::io::Error;
 
 				fn try_from(value: $ty) -> Result<Self, Self::Error> {
-					let value = i8::try_from(value).map_err(|_| {
-						std::io::Error::from(
-							std::io::ErrorKind::InvalidInput
-						)
-					})?;
 
 					if (-20..=19).contains(&value) {
+						let value = i8::try_from(value).map_err(|_| {
+							std::io::Error::from(
+								std::io::ErrorKind::InvalidInput
+							)
+						})?;
+
 						Ok(Self(value))
 					} else {
 						Err(std::io::Error::from(
@@ -196,8 +197,7 @@ macro_rules! impl_try_from_int {
 }
 
 impl_try_from_int!(
-	i8, i16, i32, i64, i128, isize,
-	u8, u16, u32, u64, u128, usize
+	i8, i16, i32, i64, i128, isize
 );
 
 macro_rules! impl_from_nice {
@@ -213,8 +213,7 @@ macro_rules! impl_from_nice {
 }
 
 impl_from_nice!(
-	i8, i16, i32, i64, i128, isize,
-	u8, u16, u32, u64, u128, usize
+	i8, i16, i32, i64, i128, isize
 );
 
 /// Retrieves the calling thread's niceness.
