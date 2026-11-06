@@ -36,6 +36,8 @@ use std::{
 
 use nmrs::{ActiveConnection, NetworkManager};
 
+use strum::{Display, EnumString};
+use std::str::FromStr;
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
@@ -343,7 +345,9 @@ pub async fn cleanup_connection_files(
 }
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+
+#[derive(Debug, Clone, PartialEq, Eq, EnumString, Display)]
+#[strum(serialize_all = "kebab-case")]
 pub enum DispatcherAction {
 	Hostname,
 	PreUp,
@@ -361,6 +365,9 @@ pub enum DispatcherAction {
 	DnsChange,
 	DeviceAdd,
 	DeviceDelete,
+
+	#[strum(default)]
+	Unknown(String),
 }
 
 #[derive(Debug, clap::Args)]
@@ -377,9 +384,7 @@ pub struct DispatcherArgs {
 
 #[cfg(test)]
 mod tests {
-	use clap::ValueEnum;
-
-use super::*;
+	use super::*;
 
 	fn test_set_niceness(n: i32) {
 		let nice = Nice::try_from(n).unwrap();
@@ -409,29 +414,40 @@ use super::*;
 	#[test]
 	fn test_dispatcher() {
 		assert_eq!(
-			DispatcherAction::from_str("pre-up", false).unwrap(),
+			DispatcherAction::from_str("pre-up").unwrap(),
 			DispatcherAction::PreUp,
 		);
 
 
 		assert_eq!(
-			DispatcherAction::from_str("dns-change", false).unwrap(),
+			DispatcherAction::from_str("dns-change").unwrap(),
 			DispatcherAction::DnsChange,
 		);
 
 		assert_eq!(
-			DispatcherAction::from_str("connectivity-change", false).unwrap(),
+			DispatcherAction::from_str("connectivity-change").unwrap(),
 			DispatcherAction::ConnectivityChange,
 		);
 
 		assert_eq!(
-			DispatcherAction::from_str("dhcp6-change", false).unwrap(),
+			DispatcherAction::from_str("dhcp6-change").unwrap(),
 			DispatcherAction::Dhcp6Change,
 		);
 
 		assert_eq!(
-			DispatcherAction::from_str("reapply", false).unwrap(),
+			DispatcherAction::from_str("reapply").unwrap(),
 			DispatcherAction::Reapply,
+		);
+
+
+		assert_eq!(
+			DispatcherAction::from_str("rehajkfdhjaskl").unwrap(),
+			DispatcherAction::Unknown("rehajkfdhjaskl".to_owned()),
+		);
+
+		assert_ne!(
+			DispatcherAction::from_str("rehajkfdhjaskl").unwrap(),
+			DispatcherAction::Unknown("noteq".to_owned()),
 		);
 
 	}
