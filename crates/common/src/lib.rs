@@ -1,4 +1,11 @@
-// use tracing;
+#[allow(unused_imports)]
+use tracing::{
+    trace,
+    debug,
+    info,
+    warn,
+    error,
+};
 
 use bytesize::ByteSize;
 
@@ -336,10 +343,43 @@ pub async fn cleanup_connection_files(
 }
 
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+pub enum DispatcherAction {
+	Hostname,
+	PreUp,
+	Up,
+	PreDown,
+	Down,
+	VpnPreUp,
+	VpnUp,
+	VpnPreDown,
+	VpnDown,
+	Dhcp4Change,
+	Dhcp6Change,
+	ConnectivityChange,
+	Reapply,
+	DnsChange,
+	DeviceAdd,
+	DeviceDelete,
+}
+
+#[derive(Debug, clap::Args)]
+pub struct DispatcherArgs {
+	pub interface: String,
+
+	#[arg(value_enum, ignore_case(true))]
+	pub action: DispatcherAction,
+
+	#[arg(env = "DHCP6_DHCP6_NTP_SERVERS")]
+	pub dhcp6_ntp_servers: Option<String>,
+}
+
 
 #[cfg(test)]
 mod tests {
-	use super::*;
+	use clap::ValueEnum;
+
+use super::*;
 
 	fn test_set_niceness(n: i32) {
 		let nice = Nice::try_from(n).unwrap();
@@ -350,6 +390,7 @@ mod tests {
 	#[test]
 	fn test_many_set_nicenesses() {
 		//WARN: Should be in order or else you'll get perm errors raising niceness
+		test_set_niceness(-1);
 		test_set_niceness(5);
 		test_set_niceness(15);
 		test_set_niceness(19);
@@ -362,5 +403,36 @@ mod tests {
 
 		assert!(Nice::try_from(-20).is_ok());
 		assert!(Nice::try_from(19).is_ok());
+	}
+
+
+	#[test]
+	fn test_dispatcher() {
+		assert_eq!(
+			DispatcherAction::from_str("pre-up", false).unwrap(),
+			DispatcherAction::PreUp,
+		);
+
+
+		assert_eq!(
+			DispatcherAction::from_str("dns-change", false).unwrap(),
+			DispatcherAction::DnsChange,
+		);
+
+		assert_eq!(
+			DispatcherAction::from_str("connectivity-change", false).unwrap(),
+			DispatcherAction::ConnectivityChange,
+		);
+
+		assert_eq!(
+			DispatcherAction::from_str("dhcp6-change", false).unwrap(),
+			DispatcherAction::Dhcp6Change,
+		);
+
+		assert_eq!(
+			DispatcherAction::from_str("reapply", false).unwrap(),
+			DispatcherAction::Reapply,
+		);
+
 	}
 }

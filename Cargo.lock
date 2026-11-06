@@ -783,11 +783,18 @@ name = "nm-timezones"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bytesize",
+ "clap",
+ "common",
+ "libc",
  "ltrace",
+ "nmrs",
  "thiserror",
+ "tokio",
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
+ "uom",
 ]
 
 [[package]]
