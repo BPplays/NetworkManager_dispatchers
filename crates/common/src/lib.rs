@@ -394,7 +394,7 @@ mod tests {
 
 	#[test]
 	fn test_many_set_nicenesses() {
-		//WARN: Should be in order or else you'll get perm errors raising niceness
+		// WARN: needs perms to raise niceness
 		test_set_niceness(-1);
 		test_set_niceness(5);
 		test_set_niceness(15);
