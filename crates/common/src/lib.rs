@@ -358,8 +358,8 @@ pub enum DispatcherAction {
 	VpnUp,
 	VpnPreDown,
 	VpnDown,
-	Dhcp4Change,
 	Dhcp6Change,
+	Dhcp4Change,
 	ConnectivityChange,
 	Reapply,
 	DnsChange,
@@ -444,10 +444,18 @@ mod tests {
 			DispatcherAction::from_str("rehajkfdhjaskl").unwrap(),
 			DispatcherAction::Unknown("rehajkfdhjaskl".to_owned()),
 		);
-
 		assert_ne!(
 			DispatcherAction::from_str("rehajkfdhjaskl").unwrap(),
-			DispatcherAction::Unknown("noteq".to_owned()),
+			DispatcherAction::Unknown("not-eq".to_owned()),
+		);
+
+		assert_eq!(
+			format!("{}", DispatcherAction::Dhcp6Change),
+			"dhcp6-change"
+		);
+		assert_ne!(
+			format!("{}", DispatcherAction::Dhcp6Change),
+			"Dhcp6Change"
 		);
 
 	}
