@@ -3,6 +3,9 @@ name = "common"
 version.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 bytesize.workspace = true
 clap.workspace = true

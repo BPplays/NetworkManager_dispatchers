@@ -6,6 +6,9 @@ resolver = "3"
 version = "0.1.0"
 edition = "2024"
 
+[workspace.lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+
 [workspace.dependencies]
 anyhow = "1.0.104"
 serde = { version = "1.0.229", features = ["derive", "rc", "alloc"] }
