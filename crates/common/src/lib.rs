@@ -178,7 +178,7 @@ pub enum SetNiceError {
 	},
 }
 
-macro_rules! impl_try_from_int {
+macro_rules! impl_try_from_int_nice {
 	($($ty:ty),*) => {
 		$(
 			impl TryFrom<$ty> for Nice {
@@ -205,11 +205,11 @@ macro_rules! impl_try_from_int {
 	};
 }
 
-impl_try_from_int!(
+impl_try_from_int_nice!(
 	i8, i16, i32, i64, i128, isize
 );
 
-macro_rules! impl_from_nice {
+macro_rules! impl_from_nice_int {
 	($($ty:ty),*) => {
 		$(
 			impl From<Nice> for $ty {
@@ -221,7 +221,7 @@ macro_rules! impl_from_nice {
 	};
 }
 
-impl_from_nice!(
+impl_from_nice_int!(
 	i8, i16, i32, i64, i128, isize
 );
 
