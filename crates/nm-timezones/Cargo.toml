@@ -20,4 +20,10 @@ tracing-appender.workspace = true
 tracing-subscriber.workspace = true
 uom.workspace = true
 
+tzupdate = {
+    package = "tzupdate",
+    git = "https://github.com/BPplays/tzupdate",
+    rev = "214dd19aad90459aa76477fd74a1382529309b26"
+}
+
 common.workspace = true

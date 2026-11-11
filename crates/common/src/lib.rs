@@ -227,19 +227,22 @@ impl_from_nice!(
 
 /// Retrieves the calling thread's niceness.
 pub fn get_current_niceness() -> io::Result<Nice> {
+	let priority: i32;
+	let errno: i32;
+
 	unsafe {
 		// getpriority() can legitimately return -1.
 		*libc::__errno_location() = 0;
 
-		let priority = libc::getpriority(libc::PRIO_PROCESS, 0);
-		let errno = *libc::__errno_location();
-
-		if priority == -1 && errno != 0 {
-			return Err(io::Error::from_raw_os_error(errno));
-		}
-
-		Nice::try_from(priority)
+		priority = libc::getpriority(libc::PRIO_PROCESS, 0);
+		errno = *libc::__errno_location();
 	}
+
+	if priority == -1 && errno != 0 {
+		return Err(io::Error::from_raw_os_error(errno));
+	}
+
+	Nice::try_from(priority)
 }
 
 /// Sets and verifies the calling thread's niceness.
@@ -377,8 +380,51 @@ pub struct DispatcherArgs {
 	#[arg(value_enum, ignore_case(true))]
 	pub action: DispatcherAction,
 
+	#[arg(env = "DHCP6_DHCP6_NAME_SERVERS")]
+	pub dhcp6_dns_servers: Option<String>,
+
 	#[arg(env = "DHCP6_DHCP6_NTP_SERVERS")]
 	pub dhcp6_ntp_servers: Option<String>,
+
+	#[arg(env = "DHCP6_POSIX_TIMEZONE")]
+	pub dhcp6_posix_timezone: Option<String>,
+
+	#[arg(env = "DHCP6_TZDB_TIMEZONE")]
+	pub dhcp6_tzdb_timezone: Option<String>,
+
+	#[arg(env = "DHCP6_FQDN_FQDN")]
+	pub dhcp6_fqdn: Option<String>,
+
+	#[arg(env = "DHCP6_DHCP6_CLIENT_ID")]
+	pub dhcp6_client_id: Option<String>,
+
+	// TODO: make this parse stuff
+	#[arg(env = "DHCP6_IP6_ADDRESS")]
+	pub dhcp6_address_string: Option<String>,
+}
+
+
+#[derive(Debug, clap::Args)]
+pub struct LogArgs {
+	#[arg(short = 'l', long = "log-file")]
+	pub file: Option<String>,
+
+	#[arg(
+		long = "log-level",
+		// default_value = "info",
+		// default_value = "debug",
+		default_value = "info",
+		value_parser = clap::value_parser!(LevelFilter)
+	)]
+	pub level: LevelFilter,
+
+	/// Control timestamps in stdout logs
+	#[arg(
+		long = "stdout-timestamps",
+		value_enum,
+		default_value_t = StdoutTimestamps::Auto
+	)]
+	pub stdout_timestamps: StdoutTimestamps,
 }
 
 
